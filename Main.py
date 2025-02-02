@@ -4,6 +4,7 @@ import os
 import ctypes
 from ctypes import wintypes
 
+
 # 定义必要的常量
 PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
 MEM_COMMIT = 0x00001000
@@ -11,6 +12,9 @@ MEM_RESERVE = 0x00002000
 PAGE_READWRITE = 0x04
 
 # 加载必要的Windows API函数
+user32 = ctypes.windll.user32
+user32.MessageBoxA.argtypes = [ctypes.c_void_p,ctypes.c_char_p,ctypes.c_char_p,ctypes.c_uint]
+
 kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
 OpenProcess = kernel32.OpenProcess
@@ -44,6 +48,17 @@ CloseHandle.argtypes = [wintypes.HANDLE]
 VirtualFreeEx = kernel32.VirtualFreeEx
 VirtualFreeEx.restype = wintypes.BOOL
 VirtualFreeEx.argtypes = [wintypes.HANDLE, wintypes.LPVOID, ctypes.c_size_t, wintypes.DWORD]
+
+
+def show_message_box(content: str, title: str, style: int = 0):
+    content_bytes = content.encode('ascii')
+    title_bytes = title.encode('ascii')
+    user32.MessageBoxA(
+        None,
+        content_bytes,
+        title_bytes,
+        style
+    )
 
 def inject_dll(pid, dll_path):
     # 打开目标进程
@@ -91,6 +106,7 @@ def inject_dll(pid, dll_path):
     VirtualFreeEx(process_handle, remote_memory, 0, 0x8000)
     CloseHandle(process_handle)
 
+    show_message_box("Injected!","Injector",0)
     return True
 
 def list_processes():
